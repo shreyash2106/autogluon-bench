@@ -8,7 +8,7 @@ cdk_context:  # AWS infra configs used to setup AWS Batch environment with AWS C
   # MAX_MACHINE_NUM: 20   # optional
   # BLOCK_DEVICE_VOLUME: 100   # optional
   # RESERVED_MEMORY_SIZE: 15000  # optional
-  INSTANCE: m5.2xlarge  # optional
+  # INSTANCE: m5.2xlarge  # optional
 
 # Benchmark configurations
 module: tabular  # required
