@@ -8,7 +8,7 @@ cdk_context:  # AWS infra configs used to setup AWS Batch environment with AWS C
   # MAX_MACHINE_NUM: 20   # optional
   # BLOCK_DEVICE_VOLUME: 100   # optional
   # RESERVED_MEMORY_SIZE: 15000  # optional
-  # INSTANCE: m5.2xlarge  # optional
+  INSTANCE: m5.2xlarge  # optional
 
 # Benchmark configurations
 module: tabular  # required
@@ -21,9 +21,7 @@ module_configs:
   # You can refer to AMLB (https://github.com/openml/automlbenchmark#quickstart) for more details
   tabular:
     framework:  # either framework or amlb_custom_branch is required
-      - AutoGluon
-    label: 
-      - stable
+      - AutoGluon:stable
     amlb_benchmark:  # required, each benchmark contains a list of datasets, can be subsetted by amlb_task below
       - test
       - small
