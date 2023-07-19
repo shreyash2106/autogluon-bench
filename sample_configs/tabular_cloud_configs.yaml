@@ -21,7 +21,9 @@ module_configs:
   # You can refer to AMLB (https://github.com/openml/automlbenchmark#quickstart) for more details
   tabular:
     framework:  # either framework or amlb_custom_branch is required
-      - AutoGluon:stable
+      - AutoGluon
+    label: 
+      - stable
     amlb_benchmark:  # required, each benchmark contains a list of datasets, can be subsetted by amlb_task below
       - test
       - small
