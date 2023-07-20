@@ -3,10 +3,12 @@ import os
 import unittest
 from unittest.mock import MagicMock, call, patch
 
+import pandas as pd
 import yaml
 
 from src.autogluon.bench.eval.hardware_metrics import hardware_metrics
 from src.autogluon.bench.eval.hardware_metrics.hardware_metrics import (
+    format_metrics,
     get_hardware_metrics,
     get_instance_id,
     get_instance_util,
@@ -15,7 +17,7 @@ from src.autogluon.bench.eval.hardware_metrics.hardware_metrics import (
 )
 
 test_dir = os.path.dirname(__file__)
-config_file = os.path.join(test_dir, "test_config.yaml")
+config_file = os.path.join(test_dir, "resources/test_config.yaml")
 if not config_file:
     raise ValueError("Invalid Config File")
 with open(config_file, "r") as f:
@@ -23,6 +25,28 @@ with open(config_file, "r") as f:
 
 hardware_metrics.aws_account_id = config["CDK_DEPLOY_ACCOUNT"]
 hardware_metrics.aws_account_region = config["CDK_DEPLOY_REGION"]
+
+from .resources.expected_metrics import metrics
+
+mock_cloudwatch_response = {
+    "Label": "CPUUtilization",
+    "Datapoints": [
+        {"Timestamp": datetime.datetime(2023, 7, 12, 17, 39), "Average": 11.472356376239336, "Unit": "Percent"}
+    ],
+    "ResponseMetadata": {
+        "RequestId": "93ed0de6-7f3c-4af8-8650-2310042c97f8",
+        "HTTPStatusCode": 200,
+        "HTTPHeaders": {
+            "x-amzn-requestid": "93ed0de6-7f3c-4af8-8650-2310042c97f8",
+            "content-type": "text/xml",
+            "content-length": "512",
+            "date": "Wed, 12 Jul 2023 18:19:56 GMT",
+        },
+        "RetryAttempts": 0,
+    },
+}
+
+mock_results_df = pd.read_csv(os.path.join(test_dir, "resources/results.csv"))
 
 
 class TestHardwareMetrics(unittest.TestCase):
@@ -58,23 +82,6 @@ class TestHardwareMetrics(unittest.TestCase):
     def test_get_instance_util(self, mock_client):
         cloudwatch_client = MagicMock()
         mock_client.side_effect = [cloudwatch_client]
-        mock_cloudwatch_response = {
-            "Label": "CPUUtilization",
-            "Datapoints": [
-                {"Timestamp": datetime.datetime(2023, 7, 12, 17, 39), "Average": 11.472356376239336, "Unit": "Percent"}
-            ],
-            "ResponseMetadata": {
-                "RequestId": "93ed0de6-7f3c-4af8-8650-2310042c97f8",
-                "HTTPStatusCode": 200,
-                "HTTPHeaders": {
-                    "x-amzn-requestid": "93ed0de6-7f3c-4af8-8650-2310042c97f8",
-                    "content-type": "text/xml",
-                    "content-length": "512",
-                    "date": "Wed, 12 Jul 2023 18:19:56 GMT",
-                },
-                "RetryAttempts": 0,
-            },
-        }
         cloudwatch_client.get_metric_statistics.return_value = mock_cloudwatch_response
         self.assertEqual(
             get_instance_util(
@@ -85,6 +92,17 @@ class TestHardwareMetrics(unittest.TestCase):
             ),
             cloudwatch_client.get_metric_statistics.return_value,
         )
+
+    @patch("pandas.read_csv")
+    @patch("src.autogluon.bench.eval.hardware_metrics.hardware_metrics.get_instance_id")
+    @patch("src.autogluon.bench.eval.hardware_metrics.hardware_metrics.get_instance_util")
+    def test_get_metrics(self, mock_instance_util, mock_instance_id, mock_csv):
+        mock_csv.return_value = mock_results_df
+        mock_instance_id.return_value = "12345"
+        job_id = list(config.get("job_configs", {}).keys())[0]
+        mock_instance_util.return_value = mock_cloudwatch_response
+        get_metrics(job_id, ["CPUUtilization"], "some bucket", "tabular", "some_benchmark", "test_folder")
+        self.assertEqual(hardware_metrics.metrics_list, metrics)
 
 
 if __name__ == "__main__":
