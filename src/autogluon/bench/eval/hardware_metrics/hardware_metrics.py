@@ -140,9 +140,9 @@ def get_hardware_metrics(
         config = yaml.safe_load(f)
     job_ids = get_job_ids(config)
 
-    metrics_list, aws_account_id, aws_account_region
-    aws_account_id = config_file.get("CDK_DEPLOY_ACCOUNT")
-    aws_account_region = config_file.get("CDK_DEPLOY_REGION")
+    global metrics_list, aws_account_id, aws_account_region
+    aws_account_id = config.get("CDK_DEPLOY_ACCOUNT")
+    aws_account_region = config.get("CDK_DEPLOY_REGION")
     for job_id in job_ids:
         sub_folder = config["job_configs"][f"{job_id}"].split("/")[5].replace("_split", "").replace(".yaml", "")
         get_metrics(
