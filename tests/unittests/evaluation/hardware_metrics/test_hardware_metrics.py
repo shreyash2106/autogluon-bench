@@ -8,7 +8,6 @@ import yaml
 
 from src.autogluon.bench.eval.hardware_metrics import hardware_metrics
 from src.autogluon.bench.eval.hardware_metrics.hardware_metrics import (
-    format_metrics,
     get_hardware_metrics,
     get_instance_id,
     get_instance_util,
@@ -103,6 +102,32 @@ class TestHardwareMetrics(unittest.TestCase):
         mock_instance_util.return_value = mock_cloudwatch_response
         get_metrics(job_id, ["CPUUtilization"], "some bucket", "tabular", "some_benchmark", "test_folder")
         self.assertEqual(hardware_metrics.metrics_list, metrics)
+
+    @patch("src.autogluon.bench.eval.hardware_metrics.hardware_metrics.get_metrics")
+    def test_get_hardware_metrics(self, mock_metrics):
+        get_hardware_metrics(config_file, "some bucket", "tabular", "some_benchmark")
+        mock_metrics.return_value = "metrics"
+        job_ids = get_job_ids(config)
+        calls = [
+            call(
+                job_ids[0],
+                ["CPUUtilization", "EBSWriteOps", "EBSReadOps"],
+                "some bucket",
+                "tabular",
+                "some_benchmark",
+                "ag_bench_20230720T102030_2d42d496266911ee8df28ee9311e6528",
+            ),
+            call(
+                job_ids[1],
+                ["CPUUtilization", "EBSWriteOps", "EBSReadOps"],
+                "some bucket",
+                "tabular",
+                "some_benchmark",
+                "ag_bench_20230720T102030_2d794800266911ee8df28ee9311e6528",
+            ),
+        ]
+        mock_metrics.assert_has_calls(calls, any_order=False)
+        assert mock_metrics.call_count == 2
 
 
 if __name__ == "__main__":
