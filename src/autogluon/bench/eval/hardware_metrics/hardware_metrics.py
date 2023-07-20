@@ -74,12 +74,12 @@ def format_metrics(
                 output_dict["Timestamp"].append(
                     instance_metrics["Datapoints"][i]["Timestamp"].strftime("%m/%d/%Y: %H:%M:%S")
                 )
-                output_dict["Statistic"].append([f"{stat}", instance_metrics["Datapoints"][i][f"{stat}"]])
+                output_dict["Statistic"].append({f"{stat}": instance_metrics["Datapoints"][i][f"{stat}"]})
             except KeyError:
                 output_dict["Timestamp"] = [
                     instance_metrics["Datapoints"][i]["Timestamp"].strftime("%m/%d/%Y: %H:%M:%S")
                 ]
-                output_dict["Statistic"] = [[f"{stat}", instance_metrics["Datapoints"][i][f"{stat}"]]]
+                output_dict["Statistic"] = [{f"{stat}": instance_metrics["Datapoints"][i][f"{stat}"]}]
     output_dict["Unit"] = instance_metrics["Datapoints"][i]["Unit"]
     return output_dict
 
