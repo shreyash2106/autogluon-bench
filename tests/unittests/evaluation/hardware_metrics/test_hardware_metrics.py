@@ -1,9 +1,11 @@
+import datetime
 import os
 import unittest
 from unittest.mock import MagicMock, call, patch
 
 import yaml
 
+from src.autogluon.bench.eval.hardware_metrics import hardware_metrics
 from src.autogluon.bench.eval.hardware_metrics.hardware_metrics import (
     get_hardware_metrics,
     get_instance_id,
@@ -11,9 +13,6 @@ from src.autogluon.bench.eval.hardware_metrics.hardware_metrics import (
     get_job_ids,
     get_metrics,
 )
-from src.autogluon.bench.eval.hardware_metrics import hardware_metrics
-
-
 
 test_dir = os.path.dirname(__file__)
 config_file = os.path.join(test_dir, "test_config.yaml")
@@ -24,6 +23,7 @@ with open(config_file, "r") as f:
 
 hardware_metrics.aws_account_id = config["CDK_DEPLOY_ACCOUNT"]
 hardware_metrics.aws_account_region = config["CDK_DEPLOY_REGION"]
+
 
 class TestHardwareMetrics(unittest.TestCase):
     def test_get_job_ids(self):
@@ -53,6 +53,39 @@ class TestHardwareMetrics(unittest.TestCase):
         self.assertEqual(instance_id, 12345)
         cluster = f"arn:aws:ecs:{hardware_metrics.aws_account_region}:{hardware_metrics.aws_account_id}:cluster/agbenchcomputeenvironmen-DhbZ6yaLr_Batch"
         ecs_client.describe_container_instances.assert_called_once_with(cluster=cluster, containerInstances=["abc"])
+
+    @patch("boto3.client")
+    def test_get_instance_util(self, mock_client):
+        cloudwatch_client = MagicMock()
+        mock_client.side_effect = [cloudwatch_client]
+        mock_cloudwatch_response = {
+            "Label": "CPUUtilization",
+            "Datapoints": [
+                {"Timestamp": datetime.datetime(2023, 7, 12, 17, 39), "Average": 11.472356376239336, "Unit": "Percent"}
+            ],
+            "ResponseMetadata": {
+                "RequestId": "93ed0de6-7f3c-4af8-8650-2310042c97f8",
+                "HTTPStatusCode": 200,
+                "HTTPHeaders": {
+                    "x-amzn-requestid": "93ed0de6-7f3c-4af8-8650-2310042c97f8",
+                    "content-type": "text/xml",
+                    "content-length": "512",
+                    "date": "Wed, 12 Jul 2023 18:19:56 GMT",
+                },
+                "RetryAttempts": 0,
+            },
+        }
+        cloudwatch_client.get_metric_statistics.return_value = mock_cloudwatch_response
+        self.assertEqual(
+            get_instance_util(
+                "1234",
+                "CPUUtilization",
+                datetime.datetime(2023, 7, 12, 17, 39),
+                datetime.datetime(2023, 7, 12, 16, 39),
+            ),
+            cloudwatch_client.get_metric_statistics.return_value,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
