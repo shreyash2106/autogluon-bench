@@ -55,16 +55,6 @@ def get_instance_util(
     )
 
 
-def results_to_csv():
-    csv_headers = ["Framework", "Dataset", "Metric", "Timestamp", "Statistic", "Unit"]
-    file_dir = os.path.dirname(__file__)
-    csv_location = os.path.join(file_dir, "hardware_metrics.csv")
-    with open(csv_location, "w", newline="") as csvFile:
-        writer = csv.DictWriter(csvFile, fieldnames=csv_headers)
-        writer.writeheader()
-        writer.writerows(metrics_list)
-
-
 def format_metrics(
     instance_metrics: dict,
     framework: str,
@@ -123,6 +113,16 @@ def get_metrics(
             predict_util = get_instance_util(instance_id, f"{metric}", utc, train_time + predict_time)
             metrics_list.append(format_metrics(training_util, framework, dataset, fold, "Training"))
             metrics_list.append(format_metrics(predict_util, framework, dataset, fold, "Prediction"))
+
+
+def results_to_csv():
+    csv_headers = ["Framework", "Dataset", "Metric", "Timestamp", "Statistic", "Unit"]
+    file_dir = os.path.dirname(__file__)
+    csv_location = os.path.join(file_dir, "hardware_metrics.csv")
+    with open(csv_location, "w", newline="") as csvFile:
+        writer = csv.DictWriter(csvFile, fieldnames=csv_headers)
+        writer.writeheader()
+        writer.writerows(metrics_list)
 
 
 def get_hardware_metrics(
