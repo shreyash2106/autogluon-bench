@@ -9,7 +9,6 @@ import pandas as pd
 import typer
 import yaml
 
-cloudwatch_client = None
 metrics_list = []
 aws_account_id = None
 aws_account_region = None
@@ -42,6 +41,7 @@ def get_instance_util(
     end_time: datetime,
     statistics: Optional[List[str]] = ["Average"],
 ) -> dict:
+    cloudwatch_client = boto3.client("cloudwatch", region_name=f"{aws_account_region}")
     return cloudwatch_client.get_metric_statistics(
         Namespace="AWS/EC2",
         MetricName=metric,
@@ -140,10 +140,9 @@ def get_hardware_metrics(
         config = yaml.safe_load(f)
     job_ids = get_job_ids(config)
 
-    global cloudwatch_client, metrics_list, aws_account_id, aws_account_region
+    metrics_list, aws_account_id, aws_account_region
     aws_account_id = config_file.get("CDK_DEPLOY_ACCOUNT")
     aws_account_region = config_file.get("CDK_DEPLOY_REGION")
-    cloudwatch_client = boto3.client("cloudwatch", region_name=f"{aws_account_region}")
     for job_id in job_ids:
         sub_folder = config["job_configs"][f"{job_id}"].split("/")[5].replace("_split", "").replace(".yaml", "")
         get_metrics(
