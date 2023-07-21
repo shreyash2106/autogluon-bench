@@ -25,7 +25,7 @@ with open(config_file, "r") as f:
 hardware_metrics.aws_account_id = config["CDK_DEPLOY_ACCOUNT"]
 hardware_metrics.aws_account_region = config["CDK_DEPLOY_REGION"]
 
-from .resources.expected_metrics import metrics
+from resources.expected_metrics import metrics
 
 mock_cloudwatch_response = {
     "Label": "CPUUtilization",
@@ -128,6 +128,13 @@ class TestHardwareMetrics(unittest.TestCase):
         ]
         mock_metrics.assert_has_calls(calls, any_order=False)
         assert mock_metrics.call_count == 2
+    
+    def test_invalid_config_file(self):
+        with self.assertRaises(ValueError):
+            get_hardware_metrics(None, "some bucket", "tabular", "some_benchmark")
+        with self.assertRaises(FileNotFoundError):
+            get_hardware_metrics("incorrect config path", "some bucket", "tabular", "some_benchmark")
+
 
 
 if __name__ == "__main__":
