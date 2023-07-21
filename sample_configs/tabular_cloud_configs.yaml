@@ -32,5 +32,5 @@ module_configs:
         - vehicle
     amlb_constraint:  # optional
       - test
-    # amlb_custom_branch: 
-    #   - https://github.com/<ACCOUNT>/autogluon#<CUSTOM_BRANCH>  # optional, `framework` is overwritten when this is specified 
+    amlb_custom_branch: 
+      - https://github.com/eddiebergman/automlbenchmark/tree/master  # optional, `framework` is overwritten when this is specified 
