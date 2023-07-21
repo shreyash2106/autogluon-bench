@@ -33,4 +33,4 @@ module_configs:
     amlb_constraint:  # optional
       - test
     amlb_custom_branch: 
-      - https://github.com/eddiebergman/automlbenchmark/#master  # optional, `framework` is overwritten when this is specified 
+      - https://github.com/eddiebergman/automlbenchmark#master  # optional, `framework` is overwritten when this is specified 
