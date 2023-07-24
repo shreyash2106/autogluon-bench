@@ -18,6 +18,8 @@ class TabularBenchmark(Benchmark):
         git_branch: str = "master",
     ):
         """Sets up the virtual environment for tabular benchmark."""
+        git_uri = "https://github.com/eddiebergman/automlbenchmark.git"
+        git_branch = "master"
         setup_script_path = os.path.abspath(os.path.dirname(__file__)) + "/setup.sh"
         command = [setup_script_path, git_uri, git_branch, self.benchmark_dir]
         result = subprocess.run(command)
