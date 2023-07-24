@@ -1,0 +1,24 @@
+benchmark_name: ag_bench_20230703T161904
+cdk_context:
+  CDK_DEPLOY_ACCOUNT: '185791363817'
+  CDK_DEPLOY_REGION: us-west-2
+  METRICS_BUCKET: yash-bench-test
+  PREFIX: ag-bench
+mode: aws
+module: tabular
+module_configs:
+  tabular:
+    amlb_benchmark:
+    - test
+    - small
+    amlb_constraint:
+    - test
+    amlb_custom_branch:
+    - https://github.com/gidler/autogluon#update_google_analytic_id
+    amlb_task:
+      small:
+      - vehicle
+      test: null
+    framework:
+    - AutoGluon:stable
+root_dir: .ag_bench_runs
