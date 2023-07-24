@@ -21,7 +21,7 @@ module_configs:
   # You can refer to AMLB (https://github.com/openml/automlbenchmark#quickstart) for more details
   tabular:
     git_uri#branch:  # required, can be any AMLB custom fork and branch
-      - https://github.com/eddiebergman/automlbenchmark/tree/master
+      - https://github.com/eddiebergman/automlbenchmark#master
     framework:  # required
       - AutoGluon:stable
     amlb_benchmark:  # required, each benchmark contains a list of datasets, can be subsetted by amlb_task below
