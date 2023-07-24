@@ -21,4 +21,5 @@ source $DIR/.venv/bin/activate
 
 python3 -m pip install --upgrade pip
 python3 -m pip install --upgrade setuptools wheel
+python3 -m pip install --upgrade openml
 pip install -r $DIR/automlbenchmark/requirements.txt
