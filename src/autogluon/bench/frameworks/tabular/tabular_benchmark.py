@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 class TabularBenchmark(Benchmark):
     def setup(
         self,
-        git_uri: str = "https://github.com/openml/automlbenchmark.git",
-        git_branch: str = "stable",
+        git_uri: str = "https://github.com/eddiebergman/automlbenchmark.git",
+        git_branch: str = "master",
     ):
         """Sets up the virtual environment for tabular benchmark."""
         setup_script_path = os.path.abspath(os.path.dirname(__file__)) + "/setup.sh"
