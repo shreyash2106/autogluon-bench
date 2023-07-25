@@ -20,5 +20,6 @@ python3 -m venv $DIR/.venv
 source $DIR/.venv/bin/activate
 
 python3 -m pip install --upgrade pip
+python3 -m pip install openml==0.14.1
 python3 -m pip install --upgrade setuptools wheel
 pip install -r https://github.com/eddiebergman/automlbenchmark/blob/master/requirements.txt
