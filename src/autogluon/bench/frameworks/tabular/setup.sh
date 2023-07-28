@@ -2,9 +2,11 @@
 
 set -eo pipefail
 
-GIT_URI=$1
-BRANCH=$2
+GIT_URI=$1  # AMLB Git URI
+BRANCH=$2  # AMLB branch
 DIR=$3  # from root of benchmark run
+AMLB_FRAMEWORK=$4  # e.g. AutoGluon_dev:test
+AMLB_USER_DIR=$5  # directory where AMLB customizations are located
 
 
 if [ ! -d $DIR ]; then
@@ -19,7 +21,8 @@ git clone --depth 1 --single-branch --branch ${BRANCH} --recurse-submodules ${GI
 python3 -m venv $DIR/.venv
 source $DIR/.venv/bin/activate
 
-python3 -m pip install --upgrade pip
-python3 -m pip install openml==0.14.1
-python3 -m pip install --upgrade setuptools wheel
-pip install -r https://github.com/eddiebergman/automlbenchmark/blob/master/requirements.txt
+# install latest AMLB
+pip install --upgrade pip
+pip install --upgrade setuptools wheel
+git clone --depth 1 --branch stable https://github.com/openml/automlbenchmark.git $DIR/automlbenchmark
+pip install -r $DIR/automlbenchmark/requirements.txt

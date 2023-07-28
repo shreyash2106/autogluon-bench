@@ -4,8 +4,6 @@ import subprocess
 import sys
 from typing import List
 
-import yaml
-
 from autogluon.bench.frameworks.benchmark import Benchmark
 
 logger = logging.getLogger(__name__)
@@ -14,14 +12,18 @@ logger = logging.getLogger(__name__)
 class TabularBenchmark(Benchmark):
     def setup(
         self,
-        git_uri: str = "https://github.com/eddiebergman/automlbenchmark.git",
-        git_branch: str = "master",
+        git_uri: str = "https://github.com/openml/automlbenchmark.git",
+        git_branch: str = "stable",
+        framework: str = "AutoGluon:stable",
+        user_dir: str = None,
     ):
         """Sets up the virtual environment for tabular benchmark."""
         git_uri = "https://github.com/eddiebergman/automlbenchmark.git"
         git_branch = "master"
         setup_script_path = os.path.abspath(os.path.dirname(__file__)) + "/setup.sh"
-        command = [setup_script_path, git_uri, git_branch, self.benchmark_dir]
+        command = [setup_script_path, git_uri, git_branch, self.benchmark_dir, framework]
+        if user_dir is not None:
+            command.append(user_dir)
         result = subprocess.run(command)
         if result.returncode != 0:
             logger.error(result.stderr)
@@ -32,10 +34,11 @@ class TabularBenchmark(Benchmark):
 
     def run(
         self,
-        benchmark: str = "test",
-        constraint: str = "test",
-        task: List[str] = None,
-        framework: str = None,
+        framework: str,
+        benchmark: str,
+        constraint: str,
+        task: str = None,
+        fold: int = None,
         user_dir: str = None,
     ):
         """Runs the tabular benchmark.
@@ -62,7 +65,13 @@ class TabularBenchmark(Benchmark):
         ]
 
         if task is not None:
-            command += ["-t", " ".join(task)]
+            command += ["-t", task]
+
+        if fold is not None:
+            command += ["-f", str(fold)]
+
+        if user_dir is not None:
+            command += ["-u", user_dir]
 
         if user_dir is not None:
             command += ["-u", user_dir]
