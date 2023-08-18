@@ -52,6 +52,7 @@ def get_instance_util(
         StartTime=start_time,
         EndTime=end_time,
         Period=120,
+        Unit='Percent',
     )
 
 
@@ -59,8 +60,8 @@ def format_metrics(
     instance_metrics: dict,
     framework: str,
     dataset: str,
-    mode: str,
     fold: int,
+    mode: str,
     statistics: Optional[List[str]] = ["Average"],
 ):
     output_dict = {}
@@ -68,19 +69,17 @@ def format_metrics(
     output_dict["dataset"] = dataset
     output_dict["mode"] = mode
     output_dict["fold"] = fold
+    output_dict["metric"] = instance_metrics["Label"]
     for i in range(len(instance_metrics["Datapoints"])):
         for stat in statistics:
-            try:
-                output_dict["Timestamp"].append(
-                    instance_metrics["Datapoints"][i]["Timestamp"].strftime("%m/%d/%Y: %H:%M:%S")
-                )
-                output_dict["Statistic"].append({f"{stat}": instance_metrics["Datapoints"][i][f"{stat}"]})
-            except KeyError:
-                output_dict["Timestamp"] = [
-                    instance_metrics["Datapoints"][i]["Timestamp"].strftime("%m/%d/%Y: %H:%M:%S")
-                ]
-                output_dict["Statistic"] = [{f"{stat}": instance_metrics["Datapoints"][i][f"{stat}"]}]
-    output_dict["Unit"] = instance_metrics["Datapoints"][i]["Unit"]
+            output_dict["framework"] = framework
+            output_dict["dataset"] = dataset
+            output_dict["mode"] = mode
+            output_dict["fold"] = fold
+            output_dict["metric"] = instance_metrics["Label"]
+            output_dict["statistic_type"] = stat
+            output_dict["statistic_value"] =  instance_metrics["Datapoints"][i][f"{stat}"]
+            output_dict["unit"] = instance_metrics["Datapoints"][i]["Unit"]
     return output_dict
 
 
@@ -109,14 +108,18 @@ def get_metrics(
                 results["predict_duration"][i],
                 results["fold"][i],
             )
-            training_util = get_instance_util(instance_id, f"{metric}", utc, train_time)
-            predict_util = get_instance_util(instance_id, f"{metric}", utc, train_time + predict_time)
-            metrics_list.append(format_metrics(training_util, framework, dataset, fold, "Training"))
-            metrics_list.append(format_metrics(predict_util, framework, dataset, fold, "Prediction"))
+            utc_dt = datetime.strptime(utc,'%Y-%m-%dT%H:%M:%S')
+            training_util = get_instance_util(instance_id, f"{metric}", utc_dt-timedelta(minutes=train_time), utc_dt-timedelta(minutes=predict_time))
+            predict_util = get_instance_util(instance_id, f"{metric}",  utc_dt-timedelta(minutes=predict_time), utc_dt)
+            #print(training_util, predict_util)
+            if training_util["Datapoints"]:
+                metrics_list.append(format_metrics(training_util, framework, dataset, fold, "Training"))
+            if predict_util["Datapoints"]:
+                metrics_list.append(format_metrics(predict_util, framework, dataset, fold, "Prediction"))
 
 
 def results_to_csv():
-    csv_headers = ["Framework", "Dataset", "Metric", "Timestamp", "Statistic", "Unit"]
+    csv_headers = ["framework", "dataset", "mode", "fold", "metric", "statistic_type", "statistic_value", "unit"]
     file_dir = os.path.dirname(__file__)
     csv_location = os.path.join(file_dir, "hardware_metrics.csv")
     with open(csv_location, "w", newline="") as csvFile:
@@ -126,7 +129,7 @@ def results_to_csv():
 
 
 def get_hardware_metrics(
-    config_file: str = typer.Option(None, "--config-file", help="Path to YAML config file containing job ids."),
+    config_file: str = typer.Argument(help="Path to YAML config file containing job ids."),
     s3_bucket: str = typer.Argument(help="Name of the S3 bucket to which the aggregated results will be outputted."),
     module: str = typer.Argument(help="Can be one of ['tabular', 'multimodal']."),
     benchmark_name: str = typer.Argument(
@@ -156,4 +159,4 @@ logger = logging.getLogger(__name__)
 
 
 if __name__ == "__main__":
-    get_hardware_metrics()
+    typer.run(get_hardware_metrics)
