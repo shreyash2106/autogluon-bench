@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, call, patch
 import pandas as pd
 import yaml
 
-from src.autogluon.bench.eval.hardware_metrics import hardware_metrics
-from src.autogluon.bench.eval.hardware_metrics.hardware_metrics import (
+from autogluon.bench.eval.hardware_metrics import hardware_metrics
+from autogluon.bench.eval.hardware_metrics.hardware_metrics import (
     get_hardware_metrics,
     get_instance_id,
     get_instance_util,
@@ -93,8 +93,8 @@ class TestHardwareMetrics(unittest.TestCase):
         )
 
     @patch("pandas.read_csv")
-    @patch("src.autogluon.bench.eval.hardware_metrics.hardware_metrics.get_instance_id")
-    @patch("src.autogluon.bench.eval.hardware_metrics.hardware_metrics.get_instance_util")
+    @patch("autogluon.bench.eval.hardware_metrics.hardware_metrics.get_instance_id")
+    @patch("autogluon.bench.eval.hardware_metrics.hardware_metrics.get_instance_util")
     def test_get_metrics(self, mock_instance_util, mock_instance_id, mock_csv):
         mock_csv.return_value = mock_results_df
         mock_instance_id.return_value = "12345"
@@ -103,7 +103,7 @@ class TestHardwareMetrics(unittest.TestCase):
         get_metrics(job_id, ["CPUUtilization"], "some bucket", "tabular", "some_benchmark", "test_folder")
         self.assertEqual(hardware_metrics.metrics_list, metrics)
 
-    @patch("src.autogluon.bench.eval.hardware_metrics.hardware_metrics.get_metrics")
+    @patch("autogluon.bench.eval.hardware_metrics.hardware_metrics.get_metrics")
     def test_get_hardware_metrics(self, mock_metrics):
         get_hardware_metrics(config_file, "some bucket", "tabular", "some_benchmark")
         mock_metrics.return_value = "metrics"
@@ -128,13 +128,12 @@ class TestHardwareMetrics(unittest.TestCase):
         ]
         mock_metrics.assert_has_calls(calls, any_order=False)
         assert mock_metrics.call_count == 2
-    
+
     def test_invalid_config_file(self):
         with self.assertRaises(ValueError):
             get_hardware_metrics(None, "some bucket", "tabular", "some_benchmark")
         with self.assertRaises(FileNotFoundError):
             get_hardware_metrics("incorrect config path", "some bucket", "tabular", "some_benchmark")
-
 
 
 if __name__ == "__main__":
