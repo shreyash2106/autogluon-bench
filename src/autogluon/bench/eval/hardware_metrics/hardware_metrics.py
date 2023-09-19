@@ -16,6 +16,20 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def find_s3_file(s3_bucket: str, prefix: str, file: str):
+    s3 = boto3.client("s3")
+    
+    paginator = s3.get_paginator("list_objects_v2")
+    page_iterator = paginator.paginate(Bucket=s3_bucket, Prefix=prefix)
+    
+    for page in page_iterator:
+        if "Contents" in page:
+            for obj in page["Contents"]:
+                if obj["Key"].endswith("results.csv"):
+                    return f"s3://{s3_bucket}/{obj['Key']}"
+    return None
+
+
 def get_job_ids(config_file: str):
     """
     This function returns a list of job IDs of all jobs ran for a benchmark run
@@ -157,11 +171,10 @@ def get_metrics(
         Sub folder for results.csv file.
         Passed in from `get_hardware_metrics` function
     """
-    result_path = f"{module}/{benchmark_name}/{sub_folder}"
-    path_prefix = f"s3://{s3_bucket}/{result_path}"
+    path_prefix = f"s3://{s3_bucket}/{module}/{benchmark_name}/{sub_folder}"
+    s3_path_to_csv = find_s3_file(s3_bucket=s3_bucket, prefix=path_prefix, file="results.csv")
     metrics_list = []
     instance_id = get_instance_id(job_id)
-    s3_path_to_csv = f"{path_prefix}/results.csv"
     results = pd.read_csv(s3_path_to_csv)
     for metric in metrics:
         for i in results.index:
@@ -184,7 +197,6 @@ def get_metrics(
             predict_util = get_instance_util(
                 "AWS/EC2", instance_id, f"{metric}", utc_dt - timedelta(minutes=predict_time), utc_dt
             )
-            # print(training_util, predict_util)
             if training_util["Datapoints"]:
                 metrics_list.append(format_metrics(training_util, framework, dataset, fold, "Training"))
             if predict_util["Datapoints"]:
@@ -212,7 +224,7 @@ def results_to_csv(metrics_list: list):
 def get_hardware_metrics(
     config_file: str = typer.Argument(help="Path to YAML config file containing job ids."),
     s3_bucket: str = typer.Argument(help="Name of the S3 bucket to which the benchmark results were outputted."),
-    module: str = typer.Argument(help="Can be one of ['tabular', 'multimodal']."),
+    module: str = typer.Argument(help="Can be one of ['tabular', 'timeseries', 'multimodal']."),
     benchmark_name: str = typer.Argument(
         help="Folder name of benchmark run in which all objects with path 'scores/results.csv' get aggregated."
     ),
@@ -243,7 +255,7 @@ def get_hardware_metrics(
     aws_account_region = config.get("CDK_DEPLOY_REGION")
     metrics_list = []
     for job_id in job_ids:
-        sub_folder = config["job_configs"][f"{job_id}"].split("/")[5].replace("_split", "").replace(".yaml", "")
+        sub_folder = config["job_configs"][f"{job_id}"].split("/")[-1].split(".")[0].replace("_split", "")
         metrics_list.append(
             get_metrics(
                 job_id, ["CPUUtilization", "EBSWriteOps", "EBSReadOps"], s3_bucket, module, benchmark_name, sub_folder

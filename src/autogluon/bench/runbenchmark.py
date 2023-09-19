@@ -23,6 +23,7 @@ from autogluon.bench.utils.general_utils import (
     formatted_time,
     upload_to_s3,
 )
+from autogluon.bench.eval.hardware_metrics.hardware_metrics import get_hardware_metrics
 
 app = typer.Typer()
 
@@ -344,6 +345,9 @@ def run(
     skip_setup: bool = typer.Option(
         False, help="Whether to skip setting up framework in local mode, default to False."
     ),
+    save_hardware_metrics: bool = typer.Option(
+        False, help="Whether to query and save the hardware metrics."
+    ),
 ):
     """Main function that runs the benchmark based on the provided configuration options."""
     configs = {}
@@ -443,7 +447,7 @@ def run(
 
             if remove_resources:
                 wait = True
-            if wait:
+            if wait or save_hardware_metrics:
                 logger.info(
                     "Waiting for jobs to complete. You can quit at anytime and the benchmark will continue to run on the cloud"
                 )
@@ -464,6 +468,13 @@ def run(
                         logger.error("Resources are not being removed due to errors.")
                 else:
                     logger.info("All job succeeded.")
+                    if save_hardware_metrics:
+                        get_hardware_metrics(
+                            config_file=aws_config_path, 
+                            s3_bucket=infra_configs["METRICS_BUCKET"], 
+                            module=module, 
+                            benchmark_name=benchmark_name,
+                        )
                     if remove_resources:
                         logger.info("Removing resoureces...")
                         destroy_stack(
